@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Subject Tree • Colorful 3D Animated Planner</title>
+<style>
+:root{
+  --bg: radial-gradient(1200px 800px at 10% 10%, #0b1220 0%, #0b1020 40%, #0a0d18 100%);
+  --panel: #10182b;
+  --panel-2: #0e1424;
+  --accent: #7c5cff;
+  --accent-2: #00d2ff;
+  --good: #22c55e;
+  --warn: #f59e0b;
+  --bad:  #ef4444;
+  --text: #e9ecf5;
+  --muted:#9aa5bd;
+  --card: #131e35;
+  --edge: #2b3a5f;
+  --edge-done: #2f7d46;
+  --shadow: 0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+  color:var(--text);
+  background:var(--bg) fixed;
+  overflow-x:hidden;
+}
+
+.topbar{
+  position:sticky; top:0; z-index:50;
+  backdrop-filter:saturate(140%) blur(8px);
+  background:linear-gradient(180deg, rgba(11,16,32,.72), rgba(11,16,32,.35));
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.progress-wrap{
+  padding:10px 16px 12px;
+}
+.progress-title{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  font-weight:600; letter-spacing:.3px;
+}
+.progress-rail{
+  position:relative; margin-top:8px; height:14px; border-radius:999px;
+  background:linear-gradient(90deg, #1a2441, #121a33);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.07), inset 0 6px 18px rgba(0,0,0,.4);
+}
+.progress-fill{
+  --pct:0%;
+  width:var(--pct); height:100%; border-radius:inherit;
+  background:linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition:width .6s cubic-bezier(.2,.8,.2,1);
+  box-shadow: inset 0 -4px 10px rgba(255,255,255,.2);
+}
+.progress-label{
+  position:absolute; top:50%; transform:translateY(-50%);
+  right:10px; font-size:.85rem; color:#ecf2ff; text-shadow:0 1px 2px rgba(0,0,0,.6);
+}
+
+.container{max-width:1200px; margin:20px auto; padding:0 16px 80px;}
+.grid{
+  display:grid; gap:16px;
+  grid-template-columns: 360px 1fr;
+}
+@media (max-width: 980px){
+  .grid{grid-template-columns:1fr}
+}
+
+.panel{
+  background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  box-shadow: var(--shadow);
+  overflow:hidden;
+}
+.panel .head{
+  padding:14px 16px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+  border-bottom:1px solid rgba(255,255,255,.07);
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.panel .head h2{
+  margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700;
+}
+.panel .body{ padding:16px; }
+
+.input{
+  display:flex; gap:10px; margin-bottom:10px;
+}
+.input > *{flex:1}
+.label{font-size:.86rem; color:var(--muted); margin:8px 0 6px}
+input[type="text"]{
+  width:100%; padding:12px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.08);
+  background:linear-gradient(180deg, #0f1730, #0c1224);
+  color:var(--text); outline:none;
+  box-shadow: inset 0 2px 12px rgba(0,0,0,.4);
+}
+input[type="text"]::placeholder{color:#8392b9}
+.btn{
+  appearance:none; border:none; border-radius:12px; padding:12px 14px;
+  background:linear-gradient(180deg, #2b3a6b, #1f2a50);
+  color:#e8edff; font-weight:700; letter-spacing:.3px; cursor:pointer;
+  box-shadow: 0 8px 18px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
+  transition: transform .12s ease, filter .2s ease, box-shadow .25s ease;
+}
+.btn:hover{ filter:brightness(1.08) saturate(1.1) }
+.btn:active{ transform:translateY(1px) scale(.99) }
+.btn.secondary{
+  background:linear-gradient(180deg, #294356, #1b2f3f);
+}
+.btn.danger{
+  background:linear-gradient(180deg, #6b2b2b, #501f1f);
+}
+.row{display:flex; gap:10px; flex-wrap:wrap}
+
+.topic-list{display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+.topic{
+  display:grid; grid-template-columns:auto 1fr auto auto; gap:10px; align-items:center;
+  padding:10px 12px; border-radius:12px; background:linear-gradient(180deg, #0e1733, #0b1328);
+  border:1px solid rgba(255,255,255,.06);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02), 0 6px 16px rgba(0,0,0,.35);
+  transform:perspective(600px) translateZ(0);
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+.topic:hover{
+  transform:perspective(600px) rotateX(2deg) rotateY(-2deg) translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0,0,0,.5);
+}
+.topic input[type="checkbox"]{ width:18px; height:18px; accent-color:var(--good); }
+.topic .tname{
+  font-weight:600; letter-spacing:.2px; outline:none; border:none; background:transparent; color:var(--text);
+}
+.topic.done{ background:linear-gradient(180deg, #0c1e1a, #0b1917); border-color:rgba(66,245,154,.15) }
+.topic.done .tname{ text-decoration:line-through; color:#b8f3d0 }
+.iconbtn{
+  width:34px; height:34px; display:grid; place-items:center; border-radius:10px;
+  background:linear-gradient(180deg, #15244b, #0f1c3a);
+  border:1px solid rgba(255,255,255,.06); cursor:pointer;
+  transition:.2s ease; color:#dce6ff;
+}
+.iconbtn:hover{ transform:translateY(-1px); filter:brightness(1.1) }
+
+.diagram-panel{ position:relative; min-height:520px; }
+#svg{
+  width:100%; height:560px; display:block; background:
+     radial-gradient(900px 600px at 80% 10%, rgba(124,92,255,.08), transparent 60%),
+     radial-gradient(900px 600px at 0% 100%, rgba(0,210,255,.08), transparent 60%);
+}
+.node{
+  transform-box: fill-box; transform-origin: center;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,.45));
+  transition: transform .2s ease;
+}
+.node:hover{ transform: translateY(-2px) scale(1.03) }
+.node circle{
+  fill:url(#nodeGrad);
+  stroke:rgba(255,255,255,.25); stroke-width:1.2;
+}
+.node circle.done{ fill:url(#nodeGradDone); stroke:rgba(66,245,154,.65) }
+.node text{ font-weight:700; font-size:12px; pointer-events:none }
+.edge{ stroke:var(--edge); stroke-width:2; opacity:.85 }
+.edge.done{ stroke:var(--edge-done) }
+
+/* Subject badge */
+.subject-badge{
+  fill:url(#subjectGrad);
+  stroke:rgba(255,255,255,.35); stroke-width:1.2;
+  filter: drop-shadow(0 15px 25px rgba(0,0,0,.55));
+}
+.ribbon{
+  fill:url(#ribbonGrad);
+  filter: drop-shadow(0 10px 22px rgba(0,0,0,.5));
+}
+
+.toast{
+  position:fixed; right:16px; bottom:16px; z-index:60;
+  background:linear-gradient(180deg, #11301d, #0e251a);
+  color:#dbffe8; border:1px solid rgba(66,245,154,.25);
+  padding:12px 14px; border-radius:12px; box-shadow:var(--shadow);
+  display:none;
+}
+.toast.show{ display:block; animation: pop .25s ease-out }
+@keyframes pop { from{ transform:scale(.9); opacity:.5 } to { transform:scale(1); opacity:1 } }
+
+.help{ font-size:.85rem; color:var(--muted); margin-top:8px }
+.small{ font-size:.85rem; color:var(--muted);}
+
+.color-row{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px
+}
+.color-row label{ font-size:.85rem; color:var(--muted) }
+.color-row input[type="color"]{
+  width:40px; height:34px; border:none; border-radius:8px; background:#0000; cursor:pointer;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.2), var(--shadow);
+}
+
+footer{ text-align:center; color:#8ea5d1; margin-top:20px; font-size:.85rem; opacity:.9 }
+footer a{ color:#cfe3ff }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="progress-wrap">
+      <div class="progress-title">
+        <span id="subjectLabel">No Subject Yet</span>
+        <span class="small">— mark subtopics to fill the bar</span>
+      </div>
+      <div class="progress-rail">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-label" id="progressText">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid">
+      <!-- LEFT: INPUTS -->
+      <section class="panel">
+        <div class="head">
+          <h2>✍️ Build Your Subject</h2>
+          <div class="row">
+            <button class="btn secondary" id="saveBtn" title="Save now">Save</button>
+            <button class="btn danger" id="resetBtn" title="Clear everything">Reset</button>
+          </div>
+        </div>
+        <div class="body">
+          <div class="label">Subject</div>
+          <div class="input">
+            <input id="subjectInput" type="text" placeholder="e.g., Physics" />
+          </div>
+
+          <div class="label">Verb (for the subject ribbon)</div>
+          <div class="input">
+            <input id="verbInput" type="text" placeholder="e.g., Master" />
+          </div>
+
+          <div class="label">Add Subtopic</div>
+          <div class="input">
+            <input id="topicInput" type="text" placeholder="e.g., Kinematics" />
+            <button class="btn" id="addTopicBtn">Add</button>
+          </div>
+
+          <div class="help">Tip: Click a subtopic chip to rename. Check the box to mark complete. You can always uncheck to take it back. ✔️</div>
+
+          <div class="label" style="margin-top:14px">Your Subtopics</div>
+          <div id="topicList" class="topic-list" aria-live="polite"></div>
+
+          <div class="label" style="margin-top:16px">Colors</div>
+          <div class="color-row">
+            <label>Primary</label><input type="color" id="colorPrimary" value="#7c5cff" />
+            <label>Secondary</label><input type="color" id="colorSecondary" value="#00d2ff" />
+            <label>Good</label><input type="color" id="colorGood" value="#22c55e" />
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: DIAGRAM -->
+      <section class="panel diagram-panel">
+        <div class="head">
+          <h2>🧭 Tree Diagram</h2>
+          <div class="row">
+            <button class="btn secondary" id="reflowBtn" title="Recompute layout">Reflow</button>
+            <button class="btn" id="shuffleBtn" title="Spice up positions">Shuffle</button>
+          </div>
+        </div>
+        <div class="body" style="padding:0">
+          <svg id="svg" viewBox="0 0 1200 560" preserveAspectRatio="xMidYMid meet" aria-label="Tree Diagram">
+            <defs>
+              <linearGradient id="nodeGrad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#283c72"/>
+                <stop offset="100%" stop-color="#17244a"/>
+              </linearGradient>
+              <linearGradient id="nodeGradDone" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#1c7c42"/>
+                <stop offset="100%" stop-color="#115735"/>
+              </linearGradient>
+              <linearGradient id="subjectGrad" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#2e3f86"/>
+                <stop offset="100%" stop-color="#1b2a5c"/>
+              </linearGradient>
+              <linearGradient id="ribbonGrad" x1="0" x2="1">
+                <stop offset="0%" stop-color="#7c5cff"/>
+                <stop offset="100%" stop-color="#00d2ff"/>
+              </linearGradient>
+              <filter id="glow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <!-- edges go here -->
+            <g id="edges"></g>
+            <!-- subject -->
+            <g id="subjectGroup">
+              <ellipse class="subject-badge" cx="600" cy="220" rx="120" ry="60"></ellipse>
+              <text id="subjectText" x="600" y="225" text-anchor="middle" font-size="20" font-weight="800" fill="#eef3ff">Your Subject</text>
+
+              <!-- Ribbon with verb -->
+              <path class="ribbon" id="ribbon" d="M470,285 C520,265 680,265 730,285 L730,305 C680,325 520,325 470,305 Z"></path>
+              <text id="verbText" x="600" y="305" text-anchor="middle" font-size="14" font-weight="700" fill="#06212b">Verb</text>
+            </g>
+            <!-- nodes go here -->
+            <g id="nodes"></g>
+          </svg>
+        </div>
+      </section>
+    </div>
+
+    <footer>Built with ❤️ — everything saves locally in your browser.</footer>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">Saved ✔️</div>
+
+<script>
+const STORE_KEY = "subject_tree_v1";
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+  let state = {
+  subject: "",
+  verb: "",
+  topics: [],
+  theme: {
+    primary: "#7c5cff",
+    secondary:"#00d2ff",
+    good:"#22c55e"
+  },
+  layoutSeed: 0
+};
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(parsed && typeof parsed === 'object'){
+        state = {...state, ...parsed};
+      }
+    }
+  }catch(e){ console.warn("load error", e); }
+}
+function save(showToast=true){
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  if(showToast) flashToast("Saved ✔️");
+}
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+const subjectInput = $("#subjectInput");
+const verbInput = $("#verbInput");
+const topicInput = $("#topicInput");
+const addTopicBtn = $("#addTopicBtn");
+const topicList = $("#topicList");
+const subjectLabel = $("#subjectLabel");
+const progressFill = $("#progressFill");
+const progressText = $("#progressText");
+const subjectText = $("#subjectText");
+const verbText = $("#verbText");
+const edgesG = $("#edges");
+const nodesG = $("#nodes");
+const saveBtn = $("#saveBtn");
+const resetBtn = $("#resetBtn");
+const reflowBtn = $("#reflowBtn");
+const shuffleBtn = $("#shuffleBtn");
+
+const colorPrimary = $("#colorPrimary");
+const colorSecondary = $("#colorSecondary");
+const colorGood = $("#colorGood");
+
+/* confetti canvas */
+const confetti = (() => {
+  const cvs = document.createElement("canvas");
+  cvs.style.position = "fixed";
+  cvs.style.inset = "0";
+  cvs.style.pointerEvents = "none";
+  cvs.style.zIndex = "70";
+  document.body.appendChild(cvs);
+  const ctx = cvs.getContext("2d");
+  let W = cvs.width = innerWidth, H = cvs.height = innerHeight;
+  addEventListener("resize", () => { W = cvs.width = innerWidth; H = cvs.height = innerHeight; });
+
+  let pieces = [];
+  function burst() {
+    const N = 160;
+    for(let i=0;i<N;i++){
+      pieces.push({
+        x: W/2, y: H*0.25,
+        vx: (Math.random()*2-1)*6,
+        vy: Math.random()*-6-2,
+        g: 0.15 + Math.random()*0.15,
+        s: 6 + Math.random()*6,
+        a: Math.random()*Math.PI,
+        av: (Math.random()*2-1)*0.2,
+        col: `hsl(${Math.floor(Math.random()*360)},90%,60%)`,
+        life: 220 + Math.random()*60
+      });
+    }
+    if(!animating) animate();
+  }
+  let animating=false;
+  function animate(){
+    animating = true;
+    ctx.clearRect(0,0,W,H);
+    pieces = pieces.filter(p => p.life>0);
+    for(const p of pieces){
+      p.vy += p.g;
+      p.x += p.vx; p.y += p.vy;
+      p.a += p.av; p.life--;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.a);
+      ctx.fillStyle = p.col;
+      ctx.fillRect(-p.s/2, -p.s/2, p.s, p.s*Math.sin(p.a*2));
+      ctx.restore();
+    }
+    if(pieces.length>0) requestAnimationFrame(animate);
+    else animating=false;
+  }
+  return { burst };
+})();
+
+/* toast */
+function flashToast(msg){
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 1200);
+}
+
+function renderList(){
+  topicList.innerHTML = "";
+  for(const t of state.topics){
+    const row = document.createElement("div");
+    row.className = "topic" + (t.done ? " done" : "");
+    row.dataset.id = t.id;
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = t.done;
+    cb.addEventListener("change", () => {
+      t.done = cb.checked;
+      row.classList.toggle("done", t.done);
+      updateProgress();
+      renderDiagram();
+      save();
+      if(allDone()) celebrate();
+    });
+
+    const name = document.createElement("input");
+    name.className = "tname";
+    name.value = t.name;
+    name.addEventListener("change", () => {
+      t.name = name.value.trim() || t.name;
+      renderDiagram(); save();
+    });
+    name.addEventListener("keydown", e => {
+      if(e.key==="Enter"){ name.blur(); }
+    });
+
+    const del = document.createElement("button");
+    del.className = "iconbtn";
+    del.title = "Delete";
+    del.innerHTML = "🗑️";
+    del.addEventListener("click", () => {
+      state.topics = state.topics.filter(x => x.id !== t.id);
+      renderList(); renderDiagram(); updateProgress(); save();
+    });
+
+    const up = document.createElement("button");
+    up.className = "iconbtn";
+    up.title = "Move up";
+    up.innerHTML = "⬆️";
+    up.addEventListener("click", () => {
+      const i = state.topics.findIndex(x=>x.id===t.id);
+      if(i>0){
+        [state.topics[i-1], state.topics[i]] = [state.topics[i], state.topics[i-1]];
+        renderList(); renderDiagram(); save();
+      }
+    });
+
+    row.append(cb, name, up, del);
+    topicList.append(row);
+  }
+}
+
+function updateProgress(){
+  const total = state.topics.length;
+  const done = state.topics.filter(t=>t.done).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  progressFill.style.setProperty("--pct", pct+"%");
+  progressText.textContent = `${pct}%`;
+  subjectLabel.textContent = state.subject ? `${state.subject}` : "No Subject Yet";
+
+  progressFill.style.background = `linear-gradient(90deg, ${state.theme.primary}, ${state.theme.secondary})`;
+}
+
+function renderDiagram(){
+  // Subject + verb
+  subjectText.textContent = state.subject || "Your Subject";
+  verbText.textContent = state.verb || "Verb";
+
+  // Update theme gradients
+  const svg = $("#svg");
+  svg.querySelector("#ribbonGrad stop[offset='0%']").setAttribute("stop-color", state.theme.primary);
+  svg.querySelector("#ribbonGrad stop[offset='100%']").setAttribute("stop-color", state.theme.secondary);
+  svg.querySelector("#nodeGradDone stop[offset='0%']").setAttribute("stop-color", shade(state.theme.good, -10));
+  svg.querySelector("#nodeGradDone stop[offset='100%']").setAttribute("stop-color", shade(state.theme.good, -35));
+
+  const W = 1200, H = 560;
+  const cx = 600, cy = 220; 
+  const ringR = 200; 
+  const jitter = 26;
+
+  edgesG.innerHTML = "";
+  nodesG.innerHTML = "";
+
+  const N = state.topics.length;
+  for(let i=0;i<N;i++){
+    const t = state.topics[i];
+    const theta = (i / Math.max(1,N)) * Math.PI * 2 - Math.PI/2;
+    const jx = seededNoise(i + state.layoutSeed) * jitter;
+    const jy = seededNoise(i*2 + state.layoutSeed) * jitter;
+
+    const x = cx + Math.cos(theta) * ringR + jx;
+    const y = cy + Math.sin(theta) * ringR + jy;
+
+    // Edge
+    const edge = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    edge.setAttribute("x1", cx);
+    edge.setAttribute("y1", cy+5);
+    edge.setAttribute("x2", x);
+    edge.setAttribute("y2", y);
+    edge.setAttribute("class", "edge"+(t.done?" done":""));
+    edge.style.strokeDasharray = "6 6";
+    edge.style.animation = "dash 1.6s linear infinite";
+    edgesG.appendChild(edge);
+
+    // Node group
+    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    g.setAttribute("class","node");
+    g.style.cursor = "pointer";
+
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+    circle.setAttribute("cx", x);
+    circle.setAttribute("cy", y);
+    circle.setAttribute("r", 28);
+    circle.setAttribute("class", t.done ? "done" : "");
+    circle.addEventListener("click", () => {
+      toggleTopic(t.id);
+    });
+
+    const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    label.setAttribute("x", x);
+    label.setAttribute("y", y+4);
+    label.setAttribute("text-anchor","middle");
+    label.setAttribute("fill","#e7edff");
+    label.textContent = t.name.length>14 ? t.name.slice(0,12)+"…" : t.name;
+
+    // hover title
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent = (t.done ? "✅ " : "⬜ ") + t.name + " — click to toggle";
+    circle.appendChild(title);
+
+    g.append(circle, label);
+    nodesG.appendChild(g);
+  }
+}
+
+function shade(hex, amt){
+  const {r,g,b} = hexToRgb(hex);
+  const nr = clamp(r + amt, 0, 255);
+  const ng = clamp(g + amt, 0, 255);
+  const nb = clamp(b + amt, 0, 255);
+  return `rgb(${nr}, ${ng}, ${nb})`;
+}
+function hexToRgb(hex){
+  const m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if(!m) return {r:124,g:92,b:255};
+  return { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) };
+}
+
+/* seeded noise for stable jitter across reloads */
+function seededNoise(n){
+  const x = Math.sin(n*9999.123 + state.layoutSeed*0.123) * 43758.5453;
+  return x - Math.floor(x) - 0.5; // [-0.5, 0.5)
+}
+
+function addTopic(name){
+  name = (name||"").trim();
+  if(!name) return;
+  state.topics.push({id:uid(), name, done:false});
+  topicInput.value = "";
+  renderList(); renderDiagram(); updateProgress(); save();
+}
+function toggleTopic(id){
+  const t = state.topics.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  renderList(); renderDiagram(); updateProgress(); save();
+  if(allDone()) celebrate();
+}
+function allDone(){
+  return state.topics.length>0 && state.topics.every(t=>t.done);
+}
+function celebrate(){
+  confetti.burst();
+  flashToast("🎉 All subtopics complete — congrats!");
+}
+
+addTopicBtn.addEventListener("click", () => addTopic(topicInput.value));
+topicInput.addEventListener("keydown", e => { if(e.key==="Enter") addTopic(topicInput.value); });
+
+subjectInput.addEventListener("input", () => { state.subject = subjectInput.value; updateProgress(); renderDiagram(); });
+verbInput.addEventListener("input", () => { state.verb = verbInput.value; renderDiagram(); });
+
+saveBtn.addEventListener("click", () => save());
+resetBtn.addEventListener("click", () => {
+  if(confirm("Reset EVERYTHING? This clears subject, verb, topics and theme.")){
+    state = { subject:"", verb:"", topics:[], theme:{primary:"#7c5cff", secondary:"#00d2ff", good:"#22c55e"}, layoutSeed:0 };
+    subjectInput.value = ""; verbInput.value = ""; topicInput.value = "";
+    colorPrimary.value = state.theme.primary;
+    colorSecondary.value = state.theme.secondary;
+    colorGood.value = state.theme.good;
+    renderList(); renderDiagram(); updateProgress(); save();
+  }
+});
+reflowBtn.addEventListener("click", () => renderDiagram());
+shuffleBtn.addEventListener("click", () => { state.layoutSeed = Math.floor(Math.random()*1e6); renderDiagram(); save(false); });
+
+colorPrimary.addEventListener("input", () => { state.theme.primary = colorPrimary.value; applyTheme(); renderDiagram(); save(false); });
+colorSecondary.addEventListener("input", () => { state.theme.secondary = colorSecondary.value; applyTheme(); renderDiagram(); save(false); });
+colorGood.addEventListener("input", () => { state.theme.good = colorGood.value; applyTheme(); renderDiagram(); save(false); });
+
+function applyTheme(){
+  document.documentElement.style.setProperty("--accent", state.theme.primary);
+  document.documentElement.style.setProperty("--accent-2", state.theme.secondary);
+  document.documentElement.style.setProperty("--good", state.theme.good);
+}
+
+function init(){
+  load();
+  // restore inputs
+  subjectInput.value = state.subject;
+  verbInput.value = state.verb;
+  colorPrimary.value = state.theme.primary;
+  colorSecondary.value = state.theme.secondary;
+  colorGood.value = state.theme.good;
+
+  applyTheme();
+  renderList();
+  renderDiagram();
+  updateProgress();
+
+  // autosave on unload
+  window.addEventListener("beforeunload", () => save(false));
+}
+init();
+
+(function addStripeAnim(){
+  const style = document.createElement("style");
+  style.textContent = `
+    .progress-fill{ background-size: 28px 14px, 100% 100%;
+      background-image:
+        linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.18) 50%, rgba(255,255,255,.18) 75%, transparent 75%, transparent 100%),
+        linear-gradient(90deg, ${state.theme.primary}, ${state.theme.secondary});
+      animation: move 18s linear infinite;
+    }
+    @keyframes move { to { background-position: 280px 0, 0 0; } }
+    @keyframes dash { to { stroke-dashoffset: -24; } }
+  `;
+  document.head.appendChild(style);
+})();
+</script>
+</body>
+</html>
