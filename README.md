@@ -1,4 +1,4 @@
-#  Subject Tree • Colorful 3D Animated Planner
+#  Subject Tree •  Planner
 
 A beautiful, interactive subject learning planner with animated tree diagrams and progress tracking. Built with vanilla JavaScript and SVG animations.
 
